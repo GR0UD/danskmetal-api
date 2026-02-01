@@ -10,7 +10,7 @@ session.post("/sessions", requireAuth, async (c: Context) => {
   try {
     const user = c.get("user");
     if (!user) {
-      return c.json({ ok: false, message: "User not found" }, 401);
+      return c.json({ ok: false, message: "Bruger ikke fundet" }, 401);
     }
 
     const newSession = await MenuSession.create({
@@ -29,7 +29,7 @@ session.post("/sessions", requireAuth, async (c: Context) => {
     });
   } catch (error) {
     console.error("Error creating session:", error);
-    return c.json({ ok: false, message: "Failed to create session" }, 500);
+    return c.json({ ok: false, message: "Kunne ikke oprette session" }, 500);
   }
 });
 
@@ -38,7 +38,7 @@ session.get("/sessions", requireAuth, async (c: Context) => {
   try {
     const user = c.get("user");
     if (!user) {
-      return c.json({ ok: false, message: "User not found" }, 401);
+      return c.json({ ok: false, message: "Bruger ikke fundet" }, 401);
     }
 
     const sessions = await MenuSession.find({ createdBy: user._id })
@@ -48,14 +48,24 @@ session.get("/sessions", requireAuth, async (c: Context) => {
     return c.json({ ok: true, sessions });
   } catch (error) {
     console.error("Error fetching sessions:", error);
-    return c.json({ ok: false, message: "Failed to fetch sessions" }, 500);
+    return c.json({ ok: false, message: "Kunne ikke hente sessioner" }, 500);
   }
 });
+
+// Validate session code format (alphanumeric, 6-10 chars)
+const isValidSessionCode = (code: string): boolean => {
+  return /^[A-Za-z0-9]{6,10}$/.test(code);
+};
 
 // Get a specific session by code (public - for menu page)
 session.get("/sessions/:code", async (c: Context) => {
   try {
     const code = c.req.param("code");
+
+    if (!isValidSessionCode(code)) {
+      return c.json({ ok: false, message: "Ugyldig sessionskode" }, 400);
+    }
+
     const session = await MenuSession.findOne({
       code,
       status: "active",
@@ -63,7 +73,7 @@ session.get("/sessions/:code", async (c: Context) => {
 
     if (!session) {
       return c.json(
-        { ok: false, message: "Session not found or expired" },
+        { ok: false, message: "Session ikke fundet eller udløbet" },
         404,
       );
     }
@@ -80,7 +90,7 @@ session.get("/sessions/:code", async (c: Context) => {
     });
   } catch (error) {
     console.error("Error fetching session:", error);
-    return c.json({ ok: false, message: "Failed to fetch session" }, 500);
+    return c.json({ ok: false, message: "Kunne ikke hente session" }, 500);
   }
 });
 
@@ -108,7 +118,7 @@ session.post("/sessions/:code/orders", async (c: Context) => {
 
     if (!menuSession) {
       return c.json(
-        { ok: false, message: "Session not found or expired" },
+        { ok: false, message: "Session ikke fundet eller udløbet" },
         404,
       );
     }
@@ -122,12 +132,12 @@ session.post("/sessions/:code/orders", async (c: Context) => {
 
     return c.json({
       ok: true,
-      message: "Order added successfully",
+      message: "Ordre tilføjet",
       ordersCount: menuSession.orders.length,
     });
   } catch (error) {
     console.error("Error adding order:", error);
-    return c.json({ ok: false, message: "Failed to add order" }, 500);
+    return c.json({ ok: false, message: "Kunne ikke tilføje ordre" }, 500);
   }
 });
 
@@ -143,16 +153,16 @@ session.patch("/sessions/:code/close", requireAuth, async (c: Context) => {
     });
 
     if (!menuSession) {
-      return c.json({ ok: false, message: "Session not found" }, 404);
+      return c.json({ ok: false, message: "Session ikke fundet" }, 404);
     }
 
     menuSession.status = "closed";
     await menuSession.save();
 
-    return c.json({ ok: true, message: "Session closed" });
+    return c.json({ ok: true, message: "Session lukket" });
   } catch (error) {
     console.error("Error closing session:", error);
-    return c.json({ ok: false, message: "Failed to close session" }, 500);
+    return c.json({ ok: false, message: "Kunne ikke lukke session" }, 500);
   }
 });
 
@@ -168,12 +178,12 @@ session.delete("/sessions/:code", requireAuth, async (c: Context) => {
     });
 
     if (result.deletedCount === 0) {
-      return c.json({ ok: false, message: "Session not found" }, 404);
+      return c.json({ ok: false, message: "Session ikke fundet" }, 404);
     }
 
-    return c.json({ ok: true, message: "Session deleted" });
+    return c.json({ ok: true, message: "Session slettet" });
   } catch (error) {
     console.error("Error deleting session:", error);
-    return c.json({ ok: false, message: "Failed to delete session" }, 500);
+    return c.json({ ok: false, message: "Kunne ikke slette session" }, 500);
   }
 });

@@ -6,12 +6,12 @@ export const requireAuth = createMiddleware(async (c, next) => {
   const token = auth?.startsWith("Bearer ") ? auth.slice(7) : auth;
 
   if (!token) {
-    return c.json({ ok: false, message: "Unauthorized" }, 401);
+    return c.json({ ok: false, message: "Ikke autoriseret" }, 401);
   }
 
   const user = await User.findOne({ token }).lean();
   if (!user) {
-    return c.json({ ok: false, message: "Unauthorized" }, 401);
+    return c.json({ ok: false, message: "Ikke autoriseret" }, 401);
   }
 
   // Attach user to the context for downstream handlers
