@@ -4,13 +4,24 @@ import crypto from "crypto";
 // In seconds - 4 hours TTL
 const TTL = 60 * 60 * 4;
 
+// Generate alphanumeric-only code (no hyphens or underscores)
+const generateCode = () => {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let code = "";
+  const bytes = crypto.randomBytes(7);
+  for (let i = 0; i < 7; i++) {
+    code += chars[bytes[i] % chars.length];
+  }
+  return code;
+};
+
 const menuSessionSchema = new Schema({
   // Unique short code for the session URL (e.g., HrJfeQx)
   code: {
     type: String,
     required: true,
     unique: true,
-    default: () => crypto.randomBytes(4).toString("base64url").slice(0, 7),
+    default: generateCode,
   },
   // Reference to the admin user who created this session
   createdBy: {
@@ -51,7 +62,7 @@ menuSessionSchema.pre("save", async function (next) {
     while (attempts < 5) {
       const existing = await MenuSession.findOne({ code: this.code });
       if (!existing) break;
-      this.code = crypto.randomBytes(4).toString("base64url").slice(0, 7);
+      this.code = generateCode();
       attempts++;
     }
   }
