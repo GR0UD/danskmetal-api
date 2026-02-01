@@ -94,6 +94,84 @@ session.get("/sessions/:code", async (c: Context) => {
   }
 });
 
+// Check if session has any orders (public - to check if user can re-order after admin deletes)
+session.get("/sessions/:code/has-orders", async (c: Context) => {
+  try {
+    const code = c.req.param("code");
+
+    if (!isValidSessionCode(code)) {
+      return c.json({ ok: false, message: "Ugyldig sessionskode" }, 400);
+    }
+
+    const sess = await MenuSession.findOne({
+      code,
+      status: "active",
+    }).lean();
+
+    if (!sess) {
+      return c.json(
+        { ok: false, message: "Session ikke fundet eller udløbet" },
+        404,
+      );
+    }
+
+    return c.json({
+      ok: true,
+      hasOrders: sess.orders.length > 0,
+      ordersCount: sess.orders.length,
+    });
+  } catch (error) {
+    console.error("Error checking session orders:", error);
+    return c.json({ ok: false, message: "Kunne ikke hente session" }, 500);
+  }
+});
+
+// Get a specific customer's order from a session (public - for order display)
+session.get(
+  "/sessions/:code/orders/customer/:customerName",
+  async (c: Context) => {
+    try {
+      const code = c.req.param("code");
+      const customerName = decodeURIComponent(c.req.param("customerName"));
+
+      if (!isValidSessionCode(code)) {
+        return c.json({ ok: false, message: "Ugyldig sessionskode" }, 400);
+      }
+
+      const sess = await MenuSession.findOne({
+        code,
+        status: "active",
+      }).lean();
+
+      if (!sess) {
+        return c.json(
+          { ok: false, message: "Session ikke fundet eller udløbet" },
+          404,
+        );
+      }
+
+      const order = sess.orders.find((o: any) => o.customer === customerName);
+
+      if (!order) {
+        return c.json({ ok: false, message: "Ordre ikke fundet" }, 404);
+      }
+
+      return c.json({
+        ok: true,
+        order: {
+          sandwich: order.sandwich,
+          bread: order.bread,
+          dressing: order.dressing,
+          image: order.image,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching customer order:", error);
+      return c.json({ ok: false, message: "Kunne ikke hente ordre" }, 500);
+    }
+  },
+);
+
 // Add an order to a session (public - for menu page)
 const orderSchema = z.object({
   sandwich: z.string().min(1),
@@ -123,16 +201,21 @@ session.post("/sessions/:code/orders", async (c: Context) => {
       );
     }
 
-    menuSession.orders.push({
+    const newOrder = {
       ...parsed.data,
       createdAt: new Date(),
-    });
+    };
+    menuSession.orders.push(newOrder);
 
     await menuSession.save();
+
+    // Get the order ID of the newly added order (last in array)
+    const addedOrder = menuSession.orders[menuSession.orders.length - 1];
 
     return c.json({
       ok: true,
       message: "Ordre tilføjet",
+      orderId: addedOrder._id.toString(),
       ordersCount: menuSession.orders.length,
     });
   } catch (error) {
@@ -165,6 +248,85 @@ session.patch("/sessions/:code/close", requireAuth, async (c: Context) => {
     return c.json({ ok: false, message: "Kunne ikke lukke session" }, 500);
   }
 });
+
+// Delete an order from a session by orderId (public - for customer self-deletion)
+session.delete("/sessions/:code/orders/self/:orderId", async (c: Context) => {
+  try {
+    const code = c.req.param("code");
+    const orderId = c.req.param("orderId");
+
+    if (!isValidSessionCode(code)) {
+      return c.json({ ok: false, message: "Ugyldig sessionskode" }, 400);
+    }
+
+    const menuSession = await MenuSession.findOne({
+      code,
+      status: "active",
+    });
+
+    if (!menuSession) {
+      return c.json({ ok: false, message: "Session ikke fundet" }, 404);
+    }
+
+    const orderIndex = menuSession.orders.findIndex(
+      (order: any) => order._id.toString() === orderId,
+    );
+
+    if (orderIndex === -1) {
+      return c.json({ ok: false, message: "Ordre ikke fundet" }, 404);
+    }
+
+    menuSession.orders.splice(orderIndex, 1);
+    await menuSession.save();
+
+    return c.json({ ok: true, message: "Ordre slettet" });
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    return c.json({ ok: false, message: "Kunne ikke slette ordre" }, 500);
+  }
+});
+
+// Delete an order from a session by customer name (public - for customer self-deletion)
+session.delete(
+  "/sessions/:code/orders/customer/:customerName",
+  async (c: Context) => {
+    try {
+      const code = c.req.param("code");
+      const customerName = decodeURIComponent(
+        c.req.param("customerName"),
+      ).trim();
+
+      if (!isValidSessionCode(code)) {
+        return c.json({ ok: false, message: "Ugyldig sessionskode" }, 400);
+      }
+
+      const menuSession = await MenuSession.findOne({
+        code,
+        status: "active",
+      });
+
+      if (!menuSession) {
+        return c.json({ ok: false, message: "Session ikke fundet" }, 404);
+      }
+
+      const orderIndex = menuSession.orders.findIndex(
+        (order: any) => order.customer?.trim() === customerName,
+      );
+
+      if (orderIndex === -1) {
+        return c.json({ ok: false, message: "Ordre ikke fundet" }, 404);
+      }
+
+      menuSession.orders.splice(orderIndex, 1);
+      await menuSession.save();
+
+      return c.json({ ok: true, message: "Ordre slettet" });
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      return c.json({ ok: false, message: "Kunne ikke slette ordre" }, 500);
+    }
+  },
+);
 
 // Delete an order from a session (requires auth - admin only)
 session.delete(
