@@ -1,0 +1,17 @@
+{
+  "name": "my-app",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "create-user": "bun run src/createUser.ts"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "hono": "^4.11.4",
+    "mongoose": "^7.5.0",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/mongoose": "^5.11.97"
+  }
+}
