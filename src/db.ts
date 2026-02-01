@@ -8,8 +8,8 @@ export function connectDB() {
     .connect(MONGODB_URI, {
       dbName: "sandwich",
     })
-    .then(() => console.log("MongoDB Conntected"))
+    .then(() => console.log("MongoDB Connected"))
     .catch((err) => {
-      console.log("MongoDB conntection failed:", err);
+      console.log("MongoDB connection failed:", err);
     });
 }

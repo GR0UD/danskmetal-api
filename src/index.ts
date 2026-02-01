@@ -2,7 +2,6 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { cors } from "hono/cors";
 import { connectDB } from "./db";
-import { sandwich } from "./routes/sandwich";
 import { user } from "./routes/user";
 import { session } from "./routes/session";
 import { logger } from "hono/logger";
@@ -44,7 +43,6 @@ app.use(logger());
 // Health check
 app.get("/", (c: Context) => c.text("Sandwich API running 🍔"));
 
-app.route("/", sandwich);
 app.route("/", session); // /api/sessions/*
 app.route("/user", user); // /api/user/login
 

@@ -1,11 +1,11 @@
 {
-  "name": "my-app",
+  "name": "danskmetal-api",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
     "create-user": "bun run src/createUser.ts"
   },
   "dependencies": {
-    "bcrypt": "^6.0.0",
     "hono": "^4.11.4",
     "mongoose": "^7.5.0",
     "zod": "^4.3.5"
