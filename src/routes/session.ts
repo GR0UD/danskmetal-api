@@ -166,6 +166,44 @@ session.patch("/sessions/:code/close", requireAuth, async (c: Context) => {
   }
 });
 
+// Delete an order from a session (requires auth - admin only)
+session.delete(
+  "/sessions/:code/orders/:orderId",
+  requireAuth,
+  async (c: Context) => {
+    try {
+      const code = c.req.param("code");
+      const orderId = c.req.param("orderId");
+      const user = c.get("user");
+
+      const menuSession = await MenuSession.findOne({
+        code,
+        createdBy: user._id,
+      });
+
+      if (!menuSession) {
+        return c.json({ ok: false, message: "Session ikke fundet" }, 404);
+      }
+
+      const orderIndex = menuSession.orders.findIndex(
+        (order: any) => order._id.toString() === orderId,
+      );
+
+      if (orderIndex === -1) {
+        return c.json({ ok: false, message: "Ordre ikke fundet" }, 404);
+      }
+
+      menuSession.orders.splice(orderIndex, 1);
+      await menuSession.save();
+
+      return c.json({ ok: true, message: "Ordre slettet" });
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      return c.json({ ok: false, message: "Kunne ikke slette ordre" }, 500);
+    }
+  },
+);
+
 // Delete a session (requires auth - admin only)
 session.delete("/sessions/:code", requireAuth, async (c: Context) => {
   try {
