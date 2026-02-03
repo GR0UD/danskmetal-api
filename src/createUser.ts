@@ -1,7 +1,8 @@
 import { connectDB } from "./db.js";
 import { User } from "./models/User.js";
 
-export const createUserDocument = async (body: any) => {
+// Internal only - not exported to prevent unauthorized user creation
+const createUserDocument = async (body: any) => {
   let copy = body;
 
   copy.password = await Bun.password.hash(body.password);
