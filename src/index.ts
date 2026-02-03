@@ -28,7 +28,4 @@ app.get("/", (c: Context) => c.text("Sandwich API running 🍔"));
 app.route("/", session); // /api/sessions/*
 app.route("/user", user); // /api/user/login
 
-export default {
-  port: 3001,
-  fetch: app.fetch,
-};
+export default app;
