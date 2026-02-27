@@ -1,11 +1,12 @@
 # Dansk Metal API
 
-A minimal REST API for managing users and menu sessions. Lightweight, middleware-driven Express-style app built with Bun/Node and TypeScript.
+A minimal REST API for managing users and menu sessions. Lightweight, middleware-driven TypeScript app (Bun/Node).
+
+Users are identified by a `username` (or other identifier) and authenticate using a short numeric PIN — the project does not require or use email addresses.
 
 ## Features
 
-- User creation and authentication
-- User creation and authentication (passwords are PIN codes)
+- User creation and authentication (PIN codes)
 - Menu session management
 - Middleware for authentication, error handling and rate limiting
 
@@ -70,14 +71,14 @@ Below are the most common endpoints; see route files for full details and payloa
 
 - `POST /users` — create a new user
 
-  Notes: the `password` field is a PIN code (numeric, short). Adjust validation in `src/routes/user.ts` if you need different rules.
+  Notes: the `password` field is a PIN code (numeric, short). Users are identified by `username` (or another non-email identifier).
 
   Example:
 
   ```sh
   curl -X POST http://localhost:3000/users \
     -H "Content-Type: application/json" \
-    -d '{"email":"alice@example.com","password":"1234"}'
+    -d '{"username":"alice","password":"1234"}'
   ```
 
 - `POST /sessions` — create a session / login
@@ -86,8 +87,8 @@ Below are the most common endpoints; see route files for full details and payloa
 
   ```sh
   curl -X POST http://localhost:3000/sessions \
-  	-H "Content-Type: application/json" \
-  	-d '{"email":"alice@example.com","password":"s3cret"}'
+    -H "Content-Type: application/json" \
+    -d '{"username":"alice","password":"1234"}'
   ```
 
 Other routes and protected endpoints are implemented in `src/routes/session.ts` and `src/routes/user.ts`. Authentication is enforced by `src/middleware/auth.ts`.
