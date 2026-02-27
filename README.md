@@ -101,7 +101,3 @@ Other routes and protected endpoints are implemented in `src/routes/session.ts` 
 ## Contributing
 
 Open an issue or submit a PR. Keep changes small and focused.
-
-## License
-
-This repository does not include an explicit license. Add a `LICENSE` file if you intend to publish.
