@@ -5,6 +5,7 @@ A minimal REST API for managing users and menu sessions. Lightweight, middleware
 ## Features
 
 - User creation and authentication
+- User creation and authentication (passwords are PIN codes)
 - Menu session management
 - Middleware for authentication, error handling and rate limiting
 
@@ -13,6 +14,14 @@ A minimal REST API for managing users and menu sessions. Lightweight, middleware
 - TypeScript
 - Bun (recommended) or Node.js
 - Minimal file-based structure under `src/`
+
+## Tech Stack
+
+- Runtime: Bun (recommended) or Node.js
+- Language: TypeScript
+- Authentication: JWT-based middleware (`src/middleware/auth.ts`)
+- Rate limiting: middleware in `src/middleware/rateLimit.ts`
+- Storage: check `src/db.ts` for the chosen adapter (DB connection is configurable)
 
 ## Quick Start
 
@@ -61,12 +70,14 @@ Below are the most common endpoints; see route files for full details and payloa
 
 - `POST /users` — create a new user
 
+  Notes: the `password` field is a PIN code (numeric, short). Adjust validation in `src/routes/user.ts` if you need different rules.
+
   Example:
 
   ```sh
   curl -X POST http://localhost:3000/users \
-  	-H "Content-Type: application/json" \
-  	-d '{"email":"alice@example.com","password":"s3cret"}'
+    -H "Content-Type: application/json" \
+    -d '{"email":"alice@example.com","password":"1234"}'
   ```
 
 - `POST /sessions` — create a session / login
